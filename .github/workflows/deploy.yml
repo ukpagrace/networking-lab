@@ -34,6 +34,6 @@ jobs:
           sed -i "s|image: ghcr.io/ukpagrace/nodeapp:.*|image: ghcr.io/ukpagrace/nodeapp:${{ github.sha }}|" script/k8s_deployement.yml
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add script/k8s_deployement.yml
+          git add script/k8s_deployment.yml
           git commit -m "update image tag to ${{ github.sha }}"
           git push      
