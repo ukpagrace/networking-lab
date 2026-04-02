@@ -16,5 +16,6 @@ spec:
       containers:
       - name: nodeapp
         image: ghcr.io/ukpagrace/nodeapp:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
