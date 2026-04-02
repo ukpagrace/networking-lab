@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'script/k8s_deployement.yml'       
 
 jobs:
   build:
@@ -23,5 +25,15 @@ jobs:
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             -t ghcr.io/ukpagrace/nodeapp:latest \
+            -t ghcr.io/ukpagrace/nodeapp:${{ github.sha }} \
             --push \
             ./app 
+
+      - name: Update deployment manifest
+        run: |
+          sed -i "s|image: ghcr.io/ukpagrace/nodeapp:.*|image: ghcr.io/ukpagrace/nodeapp:${{ github.sha }}|" script/k8s_deployement.yml
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add script/k8s_deployement.yml
+          git commit -m "update image tag to ${{ github.sha }}"
+          git push      

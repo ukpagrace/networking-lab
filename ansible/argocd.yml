@@ -1,0 +1,15 @@
+- name: Configure ArgoCD 
+  hosts: private_server
+  become: true
+  tasks:
+  - name: Create ArgoCD namespace
+    shell: k3s kubectl create namespace argocd --dry-run=client -o yaml | k3s kubectl apply -f -
+    changed_when: false
+
+  - name: Install ArgoCD
+    shell: k3s kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    changed_when: false
+    
+  - name: Wait for ArgoCD to be ready
+    shell: k3s kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+    changed_when: false
