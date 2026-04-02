@@ -1,0 +1,30 @@
+- name: Configure private server
+  hosts: private_server
+  become: true
+
+  tasks:
+    - name: Install custom routing service
+      copy:
+        dest: /etc/systemd/system/custom-routes.service
+        content: |
+          [Unit]
+          Description=Custom routing rules
+          After=network.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/sbin/ip route replace default via 10.0.0.1 dev eth1
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=multi-user.target
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start custom routes service
+      systemd:
+        name: custom-routes
+        enabled: yes
+        state: started
+        daemon_reload: yes

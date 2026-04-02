@@ -1,0 +1,45 @@
+- name: Configure nginx reverse proxy
+  hosts: gateway
+  become: true
+  tasks:
+    - name: Install nginx and certbot
+      apt:
+        name:
+          - nginx
+          - certbot
+          - python3-certbot-nginx
+        state: present
+        update_cache: yes
+
+    - name: copy nginx server content to the dest file
+      copy:
+        dest: /etc/nginx/sites-available/lab.justforcloud.online
+        content: |
+          server {
+            listen 80;
+            server_name lab.justforcloud.online;
+
+            location / {
+                proxy_pass http://10.0.0.2:30000;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+            }
+          }
+
+    - name: Symlink site enabled and site available
+      file:
+        src: /etc/nginx/sites-available/lab.justforcloud.online
+        dest: /etc/nginx/sites-enabled/lab.justforcloud.online
+        state: link
+
+    - name: Test nginx config
+      shell: nginx -t
+      changed_when: false    
+
+    - name: Reload nginx
+      shell: systemctl reload nginx
+      changed_when: false
+
+    - name: Get the TLS certificate with certbot 
+      shell: certbot --nginx -d lab.justforcloud.online --non-interactive --agree-tos -m ukpauchechi1@gmail.com
+      changed_when: false

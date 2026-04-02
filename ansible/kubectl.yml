@@ -1,0 +1,20 @@
+- name: Copy deployment and service file
+  hosts: private_server
+  become: true
+
+  tasks:
+    - name: copy deployment content to the dest file
+      copy:
+        src: ../script/k8s_deployment.yml
+        dest: /root/deployment.yml
+    - name: copy service content to the dest file
+      copy:
+        src: ../script/k8s_service.yml
+        dest: /root/service.yml 
+    - name: Apply the deployment script
+      shell: k3s kubectl apply -f /root/deployment.yml
+      changed_when: false
+    - name: Apply the service script
+      shell: k3s kubectl apply -f /root/service.yml
+      changed_when: false      
+        

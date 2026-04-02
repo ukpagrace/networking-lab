@@ -1,0 +1,48 @@
+- name: Configure node server on the private server
+  hosts: private_server
+  become: true
+
+  tasks:
+    - name: Install nodejs
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+
+    - name: Copy app.js to server
+      copy:
+        dest: /root/app.js
+        content: |
+          const http = require('http');
+          http.createServer((req, res) => {
+            res.writeHead(200);
+            res.end('Hello from VM2 private server!\n');
+          }).listen(3000, '0.0.0.0');
+          console.log('Server running on port 3000');
+
+    - name: Create systemd service for node app
+      copy:
+        dest: /etc/systemd/system/nodeapp.service
+        content: |
+          [Unit]
+          Description=Node.js app
+          After=network.target
+
+          [Service]
+          ExecStart=/usr/bin/node /root/app.js
+          restart=always
+          User=root
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start node app
+      systemd:
+        name: nodeapp
+        enabled: yes  
+        state: started  
+

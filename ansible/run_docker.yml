@@ -1,0 +1,52 @@
+- name: Run Docker 
+  hosts: private_server
+  become: true
+  tasks:
+    - name: stop node app
+      systemd:
+        name: nodeapp
+        enabled: no  
+        state: stopped    
+
+    - name: Create app directory
+      file:
+        path: /home/app
+        state: directory
+        mode: '0755'        
+
+    - name: Copy app.js to server
+      copy:
+        dest: /home/app/app.js
+        content: |
+          const http = require('http');
+          http.createServer((req, res) => {
+            res.writeHead(200);
+            res.end('Hello from VM2 private server!\n');
+          }).listen(3000, '0.0.0.0');
+          console.log('Server running on port 3000');           
+
+    - name: Add Docker File
+      copy:
+        dest: /home/app/Dockerfile
+        content: |
+          FROM node:22-alpine
+          WORKDIR /app
+          COPY app.js .
+          EXPOSE 3000
+          CMD ["node", "app.js"]
+
+    - name: Add Docker Compose File
+      copy:
+        dest: /home/app/docker-compose.yml
+        content: |
+          services:
+            app:
+              build: .
+              ports:
+                - "3000:3000"   
+
+    - name: start docker compose
+      shell: docker compose up -d
+      args:
+        chdir: /home/app
+      changed_when: false
